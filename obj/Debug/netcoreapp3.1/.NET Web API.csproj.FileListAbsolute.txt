@@ -60,3 +60,4 @@ C:\Users\User\Desktop\.NET Web API\bin\Debug\netcoreapp3.1\runtimes\win-x64\nati
 C:\Users\User\Desktop\.NET Web API\bin\Debug\netcoreapp3.1\runtimes\win-x86\native\e_sqlite3.dll
 C:\Users\User\Desktop\.NET Web API\obj\Debug\netcoreapp3.1\.NET Web API.csproj.CopyComplete
 C:\Users\User\Desktop\.NET Web API\bin\Debug\netcoreapp3.1\Dapper.dll
+C:\Users\User\Desktop\.NET Web API\bin\Debug\netcoreapp3.1\Newtonsoft.Json.dll

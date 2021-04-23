@@ -1,4 +1,4 @@
-using System;
+/*using System;
 using System.Collections.Generic;
 using _NET_Web_API.Models;
 
@@ -6,11 +6,6 @@ namespace _NET_Web_API.Data
 {
     public class MockWebApiRepository : IWebApiRepository
     {
-        public Post GetPostsBySlug(string slug)
-        {
-            return new Post{Slug="example", Title="Example", Description="Example", Body="Example", TagList="tag", CreatedAt="22-04-2021", UpdatedAt="22-04-2021"};
-        }
-
         public IEnumerable<Post> GetPosts()
         {
            var posts = new List<Post>
@@ -21,5 +16,15 @@ namespace _NET_Web_API.Data
            };
            return posts;
         }
+
+        public Post GetPostsBySlug(string slug)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IEnumerable<Tag> GetTagsBySlug(string slug)
+        {
+            throw new NotImplementedException();
+        }
     }
-}
+}*/

@@ -6,6 +6,8 @@ namespace _NET_Web_API.Data
     public interface IWebApiRepository
     {
          IEnumerable<Post> GetPosts();
-         Post GetPostsBySlug(string slug);
+         Post GetPostBySlug(string slug);
+         IEnumerable<Tag> GetTags();
+         IEnumerable<Tag> GetTagsBySlug(string slug);
     }
 }
