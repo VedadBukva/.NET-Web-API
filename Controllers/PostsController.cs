@@ -4,6 +4,7 @@ using System.Linq;
 using _NET_Web_API.Data;
 using _NET_Web_API.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.Sqlite;
 using Newtonsoft.Json;
 
 namespace _NET_Web_API.Controllers
@@ -58,6 +59,48 @@ namespace _NET_Web_API.Controllers
             blogPost.blogPost = AddTagsToPost(_repository.GetPostBySlug(slug));
             return Ok(blogPost);
         }
+
+        [HttpPost]
+        public BlogPost CreateBlogPost([FromBody] BlogPost bP)
+        {
+            if(CheckIfPostFieldsAreGood(bP.blogPost))
+            {
+                bP.blogPost.Slug = "new-slug";
+                DateTime today = DateTime.Parse(DateTime.Now.ToString());
+                bP.blogPost.CreatedAt = today.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
+
+                var connectionStringBuilder = new SqliteConnectionStringBuilder();
+                connectionStringBuilder.DataSource = "./Posts.db";
+                using(var connection = new SqliteConnection(connectionStringBuilder.ConnectionString))
+                {
+                    connection.Open();
+                    using(var transaction = connection.BeginTransaction())
+                    {
+                        var insertBlogPost = connection.CreateCommand();
+                        insertBlogPost.CommandText = "INSERT INTO Posts Values(@slug,@title,@description,@body,'',@today,'')";
+                        insertBlogPost.Parameters.AddWithValue("@slug",bP.blogPost.Slug);
+                        insertBlogPost.Parameters.AddWithValue("@title",bP.blogPost.Title);
+                        insertBlogPost.Parameters.AddWithValue("@description",bP.blogPost.Description);
+                        insertBlogPost.Parameters.AddWithValue("@body",bP.blogPost.Body);
+                        insertBlogPost.Parameters.AddWithValue("@today",bP.blogPost.CreatedAt);
+                        insertBlogPost.ExecuteNonQuery();
+
+                        foreach(var tag in bP.blogPost.TagList)
+                        {
+                            var insertTagsOfBlogPost = connection.CreateCommand();
+                            insertTagsOfBlogPost.CommandText = "INSERT INTO Tags Values(@slug,@tag)";
+                            insertTagsOfBlogPost.Parameters.AddWithValue("@slug",bP.blogPost.Slug);
+                            insertTagsOfBlogPost.Parameters.AddWithValue("@tag",tag);
+                            insertTagsOfBlogPost.ExecuteNonQuery();
+                        }
+                        transaction.Commit();
+                    }
+                    connection.Close();
+                }
+                return bP;
+            }
+            else return new BlogPost();
+        }
         #endregion
         
         #region Tags
@@ -78,6 +121,15 @@ namespace _NET_Web_API.Controllers
         #endregion      
 
         #region Methods
+        private Boolean CheckIfPostFieldsAreGood(PostWithTags post)
+        {
+            if(post.Slug == "" || post.Title == "" || post.Description == "") 
+            {
+                return false;
+            }
+            return true;
+        }
+
         private List<String> FindTagsOfPost(Post post)
         {
             var listOfTags = _repository.GetTags();
