@@ -101,6 +101,138 @@ namespace _NET_Web_API.Controllers
             }
             else return new BlogPost();
         }
+
+        [HttpPut("{slug}")]
+        public BlogPost UpdateBlogPost(string slug, [FromBody] BlogPost bP)
+        {
+            List<PostWithTags> listOfNewPosts = new List<PostWithTags>();
+            foreach(var post in _repository.GetPosts().ToList())
+            {
+                listOfNewPosts.Add(AddTagsToPost(post));
+            }
+            if(UpdateIfPostFieldsAreGood(bP.blogPost))
+            {
+                foreach(var post in listOfNewPosts)
+                {
+                    if(post.Slug == slug)
+                    {
+                        DateTime today = DateTime.Parse(DateTime.Now.ToString());
+                        bP.blogPost.UpdatedAt = today.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
+
+                        var connectionStringBuilder = new SqliteConnectionStringBuilder();
+                        connectionStringBuilder.DataSource = "./Posts.db";
+                        using(var connection = new SqliteConnection(connectionStringBuilder.ConnectionString))
+                        {
+                            connection.Open();
+                            using(var transaction = connection.BeginTransaction())
+                            {
+                                try
+                                {
+                                    var updateBlogPost = connection.CreateCommand();
+                                if(bP.blogPost.Description != null && bP.blogPost.Body != null && bP.blogPost.Title != null)
+                                {
+                                    updateBlogPost.CommandText = "UPDATE Posts Set Slug = @slug, Title = @title, Description = @description, Body = @body, UpdatedAt = @updatedAt Where Slug = @requiredSlug";
+                                    bP.blogPost.Slug = "updated-slug-" + bP.blogPost.Title.ToLower();
+                                    updateBlogPost.Parameters.AddWithValue("@requiredSlug",slug);
+                                    updateBlogPost.Parameters.AddWithValue("@slug",bP.blogPost.Slug);
+                                    updateBlogPost.Parameters.AddWithValue("@title",bP.blogPost.Title);
+                                    updateBlogPost.Parameters.AddWithValue("@description",bP.blogPost.Description);
+                                    updateBlogPost.Parameters.AddWithValue("@body",bP.blogPost.Body);
+                                    updateBlogPost.Parameters.AddWithValue("@updatedAt",bP.blogPost.UpdatedAt);
+                                }
+                                else if(bP.blogPost.Description ==null && bP.blogPost.Body == null)
+                                {
+                                    updateBlogPost.CommandText = "UPDATE Posts Set Slug = @slug, Title = @title, UpdatedAt = @updatedAt Where Slug = @requiredSlug";
+                                    bP.blogPost.Slug = "updated-slug-" + bP.blogPost.Title.ToLower();
+                                    updateBlogPost.Parameters.AddWithValue("@requiredSlug",slug);
+                                    updateBlogPost.Parameters.AddWithValue("@slug",bP.blogPost.Slug);
+                                    updateBlogPost.Parameters.AddWithValue("@title",bP.blogPost.Title);
+                                    updateBlogPost.Parameters.AddWithValue("@updatedAt",bP.blogPost.UpdatedAt);
+                                    bP.blogPost.Body = post.Body;
+                                    bP.blogPost.Description = post.Description;
+                                }
+                                else if(bP.blogPost.Title == null && bP.blogPost.Description == null)
+                                {
+                                    updateBlogPost.CommandText = "UPDATE Posts Set Body = @body, UpdatedAt = @updatedAt Where Slug = @requiredSlug";
+                                    updateBlogPost.Parameters.AddWithValue("@requiredSlug",slug);
+                                    updateBlogPost.Parameters.AddWithValue("@body",bP.blogPost.Body);
+                                    updateBlogPost.Parameters.AddWithValue("@updatedAt",bP.blogPost.UpdatedAt);
+                                    bP.blogPost.Title = post.Title;
+                                    bP.blogPost.Description = post.Description;
+                                }
+                                else if(bP.blogPost.Title == null && bP.blogPost.Body == null)
+                                {
+                                    updateBlogPost.CommandText = "UPDATE Posts Set Description = @description, UpdatedAt = @updatedAt Where Slug = @requiredSlug";
+                                    updateBlogPost.Parameters.AddWithValue("@requiredSlug",slug);
+                                    updateBlogPost.Parameters.AddWithValue("@description",bP.blogPost.Description);
+                                    updateBlogPost.Parameters.AddWithValue("@updatedAt",bP.blogPost.UpdatedAt);
+                                    bP.blogPost.Title = post.Title;
+                                    bP.blogPost.Body = post.Body;
+                                }
+                                else if(bP.blogPost.Body == null)
+                                {
+                                    updateBlogPost.CommandText = "UPDATE Posts Set Slug = @slug, Title = @title, Description = @description, UpdatedAt = @updatedAt Where Slug = @requiredSlug";
+                                    bP.blogPost.Slug = "updated-slug-" + bP.blogPost.Title.ToLower();
+                                    updateBlogPost.Parameters.AddWithValue("@requiredSlug",slug);
+                                    updateBlogPost.Parameters.AddWithValue("@slug",bP.blogPost.Slug);
+                                    updateBlogPost.Parameters.AddWithValue("@title",bP.blogPost.Title);
+                                    updateBlogPost.Parameters.AddWithValue("@description",bP.blogPost.Description);
+                                    updateBlogPost.Parameters.AddWithValue("@updatedAt",bP.blogPost.UpdatedAt);
+                                    bP.blogPost.Body = post.Body;
+                                }
+                                else if(bP.blogPost.Description == null)
+                                {
+                                    updateBlogPost.CommandText = "UPDATE Posts Set Slug = @slug, Title = @title, Body = @body, UpdatedAt = @updatedAt Where Slug = @requiredSlug";
+                                    bP.blogPost.Slug = "updated-slug-" + bP.blogPost.Title.ToLower();
+                                    updateBlogPost.Parameters.AddWithValue("@requiredSlug",slug);
+                                    updateBlogPost.Parameters.AddWithValue("@slug",bP.blogPost.Slug);
+                                    updateBlogPost.Parameters.AddWithValue("@title",bP.blogPost.Title);
+                                    updateBlogPost.Parameters.AddWithValue("@body",bP.blogPost.Body);
+                                    updateBlogPost.Parameters.AddWithValue("@updatedAt",bP.blogPost.UpdatedAt);
+                                    bP.blogPost.Description = post.Description;
+                                }
+                                else if(bP.blogPost.Title == null)
+                                {
+                                    updateBlogPost.CommandText = "UPDATE Posts Set Body = @body, Description = @description, UpdatedAt = @updatedAt Where Slug = @requiredSlug";
+                                    updateBlogPost.Parameters.AddWithValue("@requiredSlug",slug);
+                                    updateBlogPost.Parameters.AddWithValue("@body",bP.blogPost.Body);
+                                    updateBlogPost.Parameters.AddWithValue("@description",bP.blogPost.Description);
+                                    updateBlogPost.Parameters.AddWithValue("@updatedAt",bP.blogPost.UpdatedAt);
+                                    bP.blogPost.Title = post.Title;
+                                }
+                                
+                                updateBlogPost.ExecuteNonQuery();
+                            
+                                foreach(var tag in post.TagList)
+                                {
+                                    var updateTagsOfBlogPost = connection.CreateCommand();
+                                    updateTagsOfBlogPost.CommandText = "UPDATE Tags Set Slug = @slug, TagDescription = @tag Where Slug = @requiredSlug";
+                                    bP.blogPost.Slug = "updated-slug-" + bP.blogPost.Title.ToLower();
+                                    updateTagsOfBlogPost.Parameters.AddWithValue("@requiredSlug",slug);
+                                    updateTagsOfBlogPost.Parameters.AddWithValue("@slug",bP.blogPost.Slug);
+                                    updateTagsOfBlogPost.Parameters.AddWithValue("@tag",tag);
+                                    updateTagsOfBlogPost.ExecuteNonQuery();
+                                }
+                                transaction.Commit();
+                            
+                                }
+                                catch (System.Exception)
+                                {
+                                    
+                                    throw new Exception("Update queries don't work!");
+                                }
+                            }
+                                
+                            connection.Close();
+                        }
+                    bP.blogPost.CreatedAt = post.CreatedAt;
+                    bP.blogPost.TagList = post.TagList;
+                    return bP;
+                    }
+                }
+            }
+            return new BlogPost();
+        }
         #endregion
         
         #region Tags
@@ -123,7 +255,15 @@ namespace _NET_Web_API.Controllers
         #region Methods
         private Boolean CheckIfPostFieldsAreGood(PostWithTags post)
         {
-            if(post.Slug == "" || post.Title == "" || post.Description == "") 
+            if(post.Title == "" || post.Description == "" || post.Body == "") 
+            {
+                return false;
+            }
+            return true;
+        }
+        private Boolean UpdateIfPostFieldsAreGood(PostWithTags post)
+        {
+            if(post.Title == null && post.Description == null && post.Body == null) 
             {
                 return false;
             }
@@ -164,6 +304,15 @@ namespace _NET_Web_API.Controllers
             newPost.CreatedAt = oldPost.CreatedAt;
             newPost.UpdatedAt = oldPost.UpdatedAt;
             return newPost;
+        }
+
+        public BlogPost FindPostBySlug(string slug)
+        {
+            BlogPost blogPost = new BlogPost();
+            PostWithTags postWithTags = new PostWithTags();
+            postWithTags = AddTagsToPost(_repository.GetPostBySlug(slug));
+            blogPost.blogPost = postWithTags;
+            return blogPost;
         }
         #endregion
     }
