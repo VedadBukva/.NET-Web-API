@@ -52,7 +52,7 @@ namespace _NET_Web_API.Models
 
     public class BlogPost
     {
-        public Post blogPost { get; set; }
+        public PostWithTags blogPost { get; set; }
     }
 
     public class BlogPosts

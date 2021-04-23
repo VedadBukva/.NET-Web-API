@@ -28,7 +28,7 @@ namespace _NET_Web_API.Controllers
             {
                 listOfNewPosts.Add(AddTagsToPost(post));
             }
-            if(posts.Count() > 1 )
+            if(listOfNewPosts.Count() > 1 )
             {
                 BlogPosts blogPosts = new BlogPosts();
                 blogPosts.postCount = 0;
@@ -46,7 +46,7 @@ namespace _NET_Web_API.Controllers
             else
             {
                 BlogPost blogPost = new BlogPost();
-                blogPost.blogPost = posts[0];
+                blogPost.blogPost = listOfNewPosts[0];
                 return Ok(blogPost);
             }
         }
@@ -54,7 +54,9 @@ namespace _NET_Web_API.Controllers
         [HttpGet("{slug}")]
         public ActionResult <Post> GetPostBySlug(string slug)
         {
-            return Ok(AddTagsToPost(_repository.GetPostBySlug(slug)));
+            BlogPost blogPost = new BlogPost();
+            blogPost.blogPost = AddTagsToPost(_repository.GetPostBySlug(slug));
+            return Ok(blogPost);
         }
         #endregion
         
