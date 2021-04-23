@@ -1,11 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
 using _NET_Web_API.Data;
 using _NET_Web_API.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.Sqlite;
-using Newtonsoft.Json;
 
 namespace _NET_Web_API.Controllers
 {     
@@ -233,6 +234,40 @@ namespace _NET_Web_API.Controllers
             }
             return new BlogPost();
         }
+
+        [HttpDelete("{slug}")]
+        public ActionResult DeleteEmployee(string slug)  
+        {  
+            Post post = this.FindPostBySlug(slug);  
+            if (post == null)  
+            {  
+                return StatusCode(404,"Required post not found!");  
+            }  
+            var connectionStringBuilder = new SqliteConnectionStringBuilder();
+            connectionStringBuilder.DataSource = "./Posts.db";
+            using(var connection = new SqliteConnection(connectionStringBuilder.ConnectionString))
+            {
+                connection.Open();
+                using(var transaction = connection.BeginTransaction())
+                {
+                    var deletePost = connection.CreateCommand();
+                    deletePost.CommandText = "DELETE FROM Posts WHERE Slug = @slug";
+                    deletePost.Parameters.AddWithValue("@slug",slug);
+                    deletePost.ExecuteNonQuery();
+                    
+                    foreach(var tag in AddTagsToPost(FindPostBySlug(slug)).TagList)
+                    {
+                    var deleteTag = connection.CreateCommand();
+                    deleteTag.CommandText = "DELETE FROM Tags WHERE Slug = @slug";
+                    deleteTag.Parameters.AddWithValue("@slug",slug);
+                    deleteTag.ExecuteNonQuery();
+                    }                                
+                    transaction.Commit();
+                }   
+            connection.Close();
+            }         
+            return StatusCode(200,"Post is deleted!");  
+        } 
         #endregion
         
         #region Tags
@@ -306,14 +341,11 @@ namespace _NET_Web_API.Controllers
             return newPost;
         }
 
-        public BlogPost FindPostBySlug(string slug)
+        public Post FindPostBySlug(string slug)
         {
-            BlogPost blogPost = new BlogPost();
-            PostWithTags postWithTags = new PostWithTags();
-            postWithTags = AddTagsToPost(_repository.GetPostBySlug(slug));
-            blogPost.blogPost = postWithTags;
-            return blogPost;
+            return _repository.GetPostBySlug(slug);
         }
+        
         #endregion
     }
 }
