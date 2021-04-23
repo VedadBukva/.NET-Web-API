@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace _NET_Web_API.Models
 {
+    #region DbModels
     [Keyless]
     public class Post
     {
@@ -29,9 +30,10 @@ namespace _NET_Web_API.Models
         public string Slug { get; set; }
         [Required]
         public string TagDescription { get; set; }
-
     }
+    #endregion
 
+    #region FinalModels
     public class PostWithTags
     {
         public string Slug { get; set; }
@@ -42,4 +44,21 @@ namespace _NET_Web_API.Models
         public string CreatedAt { get; set; }
         public string UpdatedAt { get; set; }
     }
+
+    public class Tags
+    {
+        public string[] tags { get; set; }
+    }
+
+    public class BlogPost
+    {
+        public Post blogPost { get; set; }
+    }
+
+    public class BlogPosts
+    {
+        public PostWithTags[] blogPosts { get; set; }
+        public int postCount { get; set; }    
+    }
+    #endregion
 }

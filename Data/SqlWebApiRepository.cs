@@ -30,18 +30,6 @@ namespace _NET_Web_API.Data
             return _context.Tags.Where(p => p.Slug == slug).ToList();
         }
 
-        /*protected void LoadBlogPosts()
-        {
-            string cs = @"URI=file:.\Posts.db";
-            using var con = new SqliteConnection(cs);
-            con.Open(); 
-            string query =  @"CREATE VIEW View_BlogPostCounts AS
-                    SELECT b.Name, Count(p.PostId) as PostCount
-                    FROM Blogs b
-                    JOIN Posts p on p.BlogId = b.BlogId
-                    GROUP BY b.Name";
-            using var cmd = new SqliteCommand(query,con);
-
-        }*/
+        
     }
 }

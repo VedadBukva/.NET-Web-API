@@ -8,6 +8,6 @@ namespace _NET_Web_API.Data
          IEnumerable<Post> GetPosts();
          Post GetPostBySlug(string slug);
          IEnumerable<Tag> GetTags();
-         IEnumerable<Tag> GetTagsBySlug(string slug);
+         IEnumerable<Tag> GetTagsBySlug(string slug);   
     }
 }
