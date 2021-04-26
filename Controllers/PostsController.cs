@@ -1,4 +1,7 @@
 using System;
+using System.Text;
+using System.Text.RegularExpressions;
+using System.Globalization;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -64,9 +67,9 @@ namespace _NET_Web_API.Controllers
         [HttpPost]
         public BlogPost CreateBlogPost([FromBody] BlogPost bP)
         {
-            if(CheckIfPostFieldsAreGood(bP.blogPost))
+            if(ArePostAttributesFilledCorectly(bP.blogPost))
             {
-                bP.blogPost.Slug = "new-slug";
+                bP.blogPost.Slug = GeneratePostSlug(bP.blogPost.Title);
                 DateTime today = DateTime.Parse(DateTime.Now.ToString());
                 bP.blogPost.CreatedAt = today.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
 
@@ -111,7 +114,7 @@ namespace _NET_Web_API.Controllers
             {
                 listOfNewPosts.Add(AddTagsToPost(post));
             }
-            if(UpdateIfPostFieldsAreGood(bP.blogPost))
+            if(!ArePostAttributesEmpty(bP.blogPost))
             {
                 foreach(var post in listOfNewPosts)
                 {
@@ -129,7 +132,7 @@ namespace _NET_Web_API.Controllers
                             {
                                 try
                                 {
-                                    var updateBlogPost = connection.CreateCommand();
+                                var updateBlogPost = connection.CreateCommand();
                                 if(bP.blogPost.Description != null && bP.blogPost.Body != null && bP.blogPost.Title != null)
                                 {
                                     updateBlogPost.CommandText = "UPDATE Posts Set Slug = @slug, Title = @title, Description = @description, Body = @body, UpdatedAt = @updatedAt Where Slug = @requiredSlug";
@@ -219,8 +222,8 @@ namespace _NET_Web_API.Controllers
                                 }
                                 catch (System.Exception)
                                 {
-                                    
-                                    throw new Exception("Update queries don't work!");
+
+                                    throw new Exception("HttpPut: Update queries don't work!");
                                 }
                             }
                                 
@@ -266,7 +269,7 @@ namespace _NET_Web_API.Controllers
                 }   
             connection.Close();
             }         
-            return StatusCode(200,"Post is deleted!");  
+            return StatusCode(200,$"Post with slug \"{slug}\" is deleted!");  
         } 
         #endregion
         
@@ -287,8 +290,8 @@ namespace _NET_Web_API.Controllers
         }
         #endregion      
 
-        #region Methods
-        private Boolean CheckIfPostFieldsAreGood(PostWithTags post)
+        #region AuxiliaryMethods
+        private Boolean ArePostAttributesFilledCorectly(PostWithTags post)
         {
             if(post.Title == "" || post.Description == "" || post.Body == "") 
             {
@@ -296,13 +299,13 @@ namespace _NET_Web_API.Controllers
             }
             return true;
         }
-        private Boolean UpdateIfPostFieldsAreGood(PostWithTags post)
+        private Boolean ArePostAttributesEmpty(PostWithTags post)
         {
             if(post.Title == null && post.Description == null && post.Body == null) 
             {
-                return false;
+                return true;
             }
-            return true;
+            return false;
         }
 
         private List<String> FindTagsOfPost(Post post)
@@ -345,7 +348,30 @@ namespace _NET_Web_API.Controllers
         {
             return _repository.GetPostBySlug(slug);
         }
-        
+
+        public string GeneratePostSlug(string title)
+        {
+            var resultSlug = new string(title.Where(c => !char.IsPunctuation(c)).ToArray());
+            Regex.Replace(resultSlug, @"\s+", "-");
+            return RemoveDiacritics(resultSlug);
+        }
+
+        public String RemoveDiacritics(string postTitle)
+        {
+        String normalizedString = postTitle.Normalize(NormalizationForm.FormD);
+        StringBuilder stringBuilder = new StringBuilder();
+    
+        for (int i = 0; i < normalizedString.Length; i++)
+            {
+            Char c = normalizedString[i];
+            if (CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
+                {
+                stringBuilder.Append(c);
+                }
+            }
+    
+        return stringBuilder.ToString().Normalize(NormalizationForm.FormC).ToLower();
+        }  
         #endregion
     }
 }
