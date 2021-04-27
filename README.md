@@ -1,5 +1,6 @@
 # Simple blogging platform - Web API
-The goal of this project is to implement a backend solution for a simple blogging platform. It uses a custom REST API for all requests. Any client should be able to use this API.
+The goal of this project is to implement a backend solution for a simple blogging platform. It uses a custom REST API for all requests. Any client should be able to use this API.<br>
+The API is written in ASP.NET Core using the MVC architecture 
 
 ## General functionality
 - CRUD Blog posts
@@ -11,11 +12,11 @@ For purpose of this project was used SQLite database which is integrated in proj
 Database is filled with initial data
 
 ## How to run? 
-After loading project folder in Visual Studio Code, run the ASP.NET Core application with the following line of code in the terminal:
+Load project folder in Visual Studio Code and run the ASP.NET Core application with the following line of code in terminal:
 ```
 dotnet run
 ```
-In the terminal will be visible URL of localhost where we can test functionalities of this API
+After successful start of app in the terminal will be visible URL of localhost where we can test functionalities of this API
 
 ## Endpoints
 ### Get Blog Post
