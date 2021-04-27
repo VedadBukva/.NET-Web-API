@@ -1,3 +1,4 @@
+using System.Net.Http;
 using System;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -67,15 +68,23 @@ namespace _NET_Web_API.Controllers
         }
 
         [HttpPost]
-        public BlogPost CreateBlogPost([FromBody] BlogPost bP)
+        public ActionResult CreateBlogPost([FromBody] BlogPost bP)
         {
             if(ArePostAttributesFilledCorectly(bP.blogPost))
             {
-                bP.blogPost.Slug = GeneratePostSlug(bP.blogPost.Title);
+                bP.blogPost.Slug = GeneratePostSlug(bP.blogPost.Title.Trim());
+                bP.blogPost.Title = bP.blogPost.Title.Trim();
+                bP.blogPost.Description = bP.blogPost.Description.Trim();
+                bP.blogPost.Body = bP.blogPost.Body.Trim();
+                                
                 DateTime today = DateTime.Parse(DateTime.Now.ToString());
                 bP.blogPost.CreatedAt = today.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
+                for(var i=0; i<bP.blogPost.TagList.Count(); i++)
+                {
+                    bP.blogPost.TagList[i] = bP.blogPost.TagList[i].Trim();
+                }
 
-                var connectionStringBuilder = new SqliteConnectionStringBuilder();
+                var connectionStringBuilder = new SqliteConnectionStringBuilder(); 
                 connectionStringBuilder.DataSource = "./Posts.db";
                 using(var connection = new SqliteConnection(connectionStringBuilder.ConnectionString))
                 {
@@ -103,13 +112,13 @@ namespace _NET_Web_API.Controllers
                     }
                     connection.Close();
                 }
-                return bP;
+                return Ok(bP);
             }
-            else return new BlogPost();
+            return StatusCode(400,"ERROR: Required fields are title, description and body! (Tag list is optional)");
         }
 
         [HttpPut("{slug}")]
-        public BlogPost UpdateBlogPost(string slug, [FromBody] BlogPost bP)
+        public ActionResult UpdateBlogPost(string slug, [FromBody] BlogPost bP)
         {
             List<PostWithTags> listOfNewPosts = new List<PostWithTags>();
             foreach(var post in _repository.GetPosts().ToList())
@@ -122,8 +131,25 @@ namespace _NET_Web_API.Controllers
                 {
                     if(post.Slug == slug)
                     {
+                        if(bP.blogPost.Title != null) {
+                            bP.blogPost.Slug = GeneratePostSlug(bP.blogPost.Title.Trim());
+                            bP.blogPost.Title = bP.blogPost.Title.Trim();
+                        }
+                        if(bP.blogPost.Description != null) {
+                            bP.blogPost.Description = bP.blogPost.Description.Trim();
+                        }
+                        if(bP.blogPost.Body != null) {
+                            bP.blogPost.Body = bP.blogPost.Body.Trim();
+                        }
+                        bP.blogPost.CreatedAt = post.CreatedAt;
+                        bP.blogPost.TagList = post.TagList;
+
                         DateTime today = DateTime.Parse(DateTime.Now.ToString());
                         bP.blogPost.UpdatedAt = today.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
+                        for(var i=0; i<bP.blogPost.TagList.Count(); i++)
+                        {
+                            bP.blogPost.TagList[i] = bP.blogPost.TagList[i].Trim();
+                        }
 
                         var connectionStringBuilder = new SqliteConnectionStringBuilder();
                         connectionStringBuilder.DataSource = "./Posts.db";
@@ -138,7 +164,6 @@ namespace _NET_Web_API.Controllers
                                 if(bP.blogPost.Description != null && bP.blogPost.Body != null && bP.blogPost.Title != null)
                                 {
                                     updateBlogPost.CommandText = "UPDATE Posts Set Slug = @slug, Title = @title, Description = @description, Body = @body, UpdatedAt = @updatedAt Where Slug = @requiredSlug";
-                                    bP.blogPost.Slug = "updated-slug-" + bP.blogPost.Title.ToLower();
                                     updateBlogPost.Parameters.AddWithValue("@requiredSlug",slug);
                                     updateBlogPost.Parameters.AddWithValue("@slug",bP.blogPost.Slug);
                                     updateBlogPost.Parameters.AddWithValue("@title",bP.blogPost.Title);
@@ -149,7 +174,6 @@ namespace _NET_Web_API.Controllers
                                 else if(bP.blogPost.Description ==null && bP.blogPost.Body == null)
                                 {
                                     updateBlogPost.CommandText = "UPDATE Posts Set Slug = @slug, Title = @title, UpdatedAt = @updatedAt Where Slug = @requiredSlug";
-                                    bP.blogPost.Slug = "updated-slug-" + bP.blogPost.Title.ToLower();
                                     updateBlogPost.Parameters.AddWithValue("@requiredSlug",slug);
                                     updateBlogPost.Parameters.AddWithValue("@slug",bP.blogPost.Slug);
                                     updateBlogPost.Parameters.AddWithValue("@title",bP.blogPost.Title);
@@ -178,7 +202,6 @@ namespace _NET_Web_API.Controllers
                                 else if(bP.blogPost.Body == null)
                                 {
                                     updateBlogPost.CommandText = "UPDATE Posts Set Slug = @slug, Title = @title, Description = @description, UpdatedAt = @updatedAt Where Slug = @requiredSlug";
-                                    bP.blogPost.Slug = "updated-slug-" + bP.blogPost.Title.ToLower();
                                     updateBlogPost.Parameters.AddWithValue("@requiredSlug",slug);
                                     updateBlogPost.Parameters.AddWithValue("@slug",bP.blogPost.Slug);
                                     updateBlogPost.Parameters.AddWithValue("@title",bP.blogPost.Title);
@@ -189,7 +212,6 @@ namespace _NET_Web_API.Controllers
                                 else if(bP.blogPost.Description == null)
                                 {
                                     updateBlogPost.CommandText = "UPDATE Posts Set Slug = @slug, Title = @title, Body = @body, UpdatedAt = @updatedAt Where Slug = @requiredSlug";
-                                    bP.blogPost.Slug = "updated-slug-" + bP.blogPost.Title.ToLower();
                                     updateBlogPost.Parameters.AddWithValue("@requiredSlug",slug);
                                     updateBlogPost.Parameters.AddWithValue("@slug",bP.blogPost.Slug);
                                     updateBlogPost.Parameters.AddWithValue("@title",bP.blogPost.Title);
@@ -213,31 +235,25 @@ namespace _NET_Web_API.Controllers
                                 {
                                     var updateTagsOfBlogPost = connection.CreateCommand();
                                     updateTagsOfBlogPost.CommandText = "UPDATE Tags Set Slug = @slug, TagDescription = @tag Where Slug = @requiredSlug";
-                                    bP.blogPost.Slug = "updated-slug-" + bP.blogPost.Title.ToLower();
                                     updateTagsOfBlogPost.Parameters.AddWithValue("@requiredSlug",slug);
                                     updateTagsOfBlogPost.Parameters.AddWithValue("@slug",bP.blogPost.Slug);
                                     updateTagsOfBlogPost.Parameters.AddWithValue("@tag",tag);
                                     updateTagsOfBlogPost.ExecuteNonQuery();
                                 }
                                 transaction.Commit();
-                            
                                 }
                                 catch (System.Exception)
                                 {
-
-                                    throw new Exception("HttpPut: Update queries don't work!");
+                                    throw new Exception("WARNING: Update queries don't work properly!");
                                 }
                             }
-                                
                             connection.Close();
                         }
-                    bP.blogPost.CreatedAt = post.CreatedAt;
-                    bP.blogPost.TagList = post.TagList;
-                    return bP;
+                    return Ok(bP);
                     }
                 }
             }
-            return new BlogPost();
+            return StatusCode(400,"ERROR: Bad PUT request!");
         }
 
         [HttpDelete("{slug}")]
@@ -285,7 +301,7 @@ namespace _NET_Web_API.Controllers
             {
                 listOfTags.Add(tag.TagDescription);
             }
-            String[] addedTags = listOfTags.ToArray();
+            String[] addedTags = listOfTags.Distinct().ToArray();
             Tags returnTags = new Tags();
             returnTags.tags = addedTags;
             return Ok(returnTags);
@@ -295,7 +311,9 @@ namespace _NET_Web_API.Controllers
         #region AuxiliaryMethods
         private Boolean ArePostAttributesFilledCorectly(PostWithTags post)
         {
-            if(post.Title == "" || post.Description == "" || post.Body == "") 
+            if(post.Title == null || post.Title == String.Empty 
+            || post.Description == null || post.Description == String.Empty 
+            || post.Body == null || post.Body == String.Empty) 
             {
                 return false;
             }
@@ -354,8 +372,9 @@ namespace _NET_Web_API.Controllers
         public string GeneratePostSlug(string title)
         {
             var resultSlug = new string(title.Where(c => !char.IsPunctuation(c)).ToArray());
-            Regex.Replace(resultSlug, @"\s+", "-");
-            return RemoveDiacritics(resultSlug);
+            resultSlug = RemoveDiacritics(resultSlug);
+            resultSlug = Regex.Replace(resultSlug, @"\s+", "-");
+            return resultSlug;
         }
 
         public String RemoveDiacritics(string postTitle)
@@ -398,7 +417,7 @@ namespace _NET_Web_API.Controllers
                     tagNotFoundInPost.Add(post);
                 }
             }
-            
+
             List<PostWithTags> sortedPosts = new List<PostWithTags>();
             foreach(var post in tagFoundInPost)
             {
