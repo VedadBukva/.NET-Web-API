@@ -4,15 +4,13 @@ using System.Text.RegularExpressions;
 using System.Globalization;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
-using System.Net.Http;
 using _NET_Web_API.Data;
 using _NET_Web_API.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.Sqlite;
 
 namespace _NET_Web_API.Controllers
-{     
+{
     [Route("api/[controller]")]
     [ApiController]
     public class PostsController : ControllerBase
@@ -23,7 +21,7 @@ namespace _NET_Web_API.Controllers
             _repository = repository;
         }
 
-        #region Posts
+        #region PostsRequests
         [HttpGet]
         public ActionResult <IEnumerable<Post>> GetAllPosts()
         {
@@ -44,8 +42,12 @@ namespace _NET_Web_API.Controllers
                     listOfPosts.Add(post);
                     blogPosts.postCount++;
                 }
-                PostWithTags[] postArray = listOfPosts.ToArray();
-                blogPosts.blogPosts = postArray;
+                blogPosts.blogPosts = listOfPosts.ToArray();
+                string tagFromQueryString = HttpContext.Request.Query["tag"].ToString();
+                if(!tagFromQueryString.Equals(""))
+                {
+                    return Ok(SortPostsByTag(blogPosts,tagFromQueryString));
+                }
                 return Ok(blogPosts);
             }
             else
@@ -273,7 +275,7 @@ namespace _NET_Web_API.Controllers
         } 
         #endregion
         
-        #region Tags
+        #region TagsRequests
         [HttpGet("tags")]
         public ActionResult <IEnumerable<Post>> GetAllTags()
         {
@@ -372,6 +374,46 @@ namespace _NET_Web_API.Controllers
     
         return stringBuilder.ToString().Normalize(NormalizationForm.FormC).ToLower();
         }  
+
+        public BlogPosts SortPostsByTag(BlogPosts bp,string findTag) {
+            List<PostWithTags> tagFoundInPost = new List<PostWithTags>();
+            List<PostWithTags> tagNotFoundInPost = new List<PostWithTags>();
+            foreach(var post in bp.blogPosts)
+            {
+                var tagExist = false;
+                foreach(var tag in post.TagList)
+                {
+                    if(tag.ToLower().Contains(findTag.ToLower()))
+                    {
+                        tagExist = true;
+                        break;
+                    }
+                }
+                if(tagExist == true)
+                {
+                    tagFoundInPost.Add(post);
+                }
+                else 
+                {
+                    tagNotFoundInPost.Add(post);
+                }
+            }
+            
+            List<PostWithTags> sortedPosts = new List<PostWithTags>();
+            foreach(var post in tagFoundInPost)
+            {
+                sortedPosts.Add(post);
+            }
+            foreach(var post in tagNotFoundInPost)
+            {
+                sortedPosts.Add(post);
+            }
+            
+            BlogPosts sortedPostsInBlogPosts = new BlogPosts();
+            sortedPostsInBlogPosts.blogPosts = sortedPosts.ToArray();
+            return sortedPostsInBlogPosts;
+        }
+
         #endregion
     }
 }

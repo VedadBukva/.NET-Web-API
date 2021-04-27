@@ -33,7 +33,7 @@ namespace _NET_Web_API.Models
     }
     #endregion
 
-    #region FinalModels
+    #region RepresentativeModels
     public class PostWithTags
     {
         public string Slug { get; set; }
