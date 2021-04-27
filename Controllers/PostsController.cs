@@ -12,7 +12,7 @@ using Microsoft.Data.Sqlite;
 
 namespace _NET_Web_API.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api")]
     [ApiController]
     public class PostsController : ControllerBase
     {
@@ -23,7 +23,7 @@ namespace _NET_Web_API.Controllers
         }
 
         #region PostsRequests
-        [HttpGet]
+        [HttpGet("posts")]
         public ActionResult <IEnumerable<Post>> GetAllPosts()
         {
             var posts = _repository.GetPosts().ToList();
@@ -59,7 +59,7 @@ namespace _NET_Web_API.Controllers
             }
         }
 
-        [HttpGet("{slug}")]
+        [HttpGet("posts/{slug}")]
         public ActionResult <Post> GetPostBySlug(string slug)
         {
             BlogPost blogPost = new BlogPost();
@@ -117,7 +117,7 @@ namespace _NET_Web_API.Controllers
             return StatusCode(400,"ERROR: Required fields are title, description and body! (Tag list is optional)");
         }
 
-        [HttpPut("{slug}")]
+        [HttpPut("posts/{slug}")]
         public ActionResult UpdateBlogPost(string slug, [FromBody] BlogPost bP)
         {
             List<PostWithTags> listOfNewPosts = new List<PostWithTags>();
@@ -256,7 +256,7 @@ namespace _NET_Web_API.Controllers
             return StatusCode(400,"ERROR: Bad PUT request!");
         }
 
-        [HttpDelete("{slug}")]
+        [HttpDelete("posts/{slug}")]
         public ActionResult DeleteEmployee(string slug)  
         {  
             Post post = this.FindPostBySlug(slug);  
@@ -352,7 +352,7 @@ namespace _NET_Web_API.Controllers
             {
                 addTagsToPost.Add(tag);
             }
-            String[] addedTags = addTagsToPost.ToArray();
+            String[] addedTags = addTagsToPost.Distinct().ToArray();
 
             newPost.Slug = oldPost.Slug;
             newPost.Title = oldPost.Title;
