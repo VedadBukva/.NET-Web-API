@@ -28,7 +28,8 @@ Will return single blog post
 ```
 GET /api/posts
 ```
-Returns most recent blog posts by default, optionally provide tag query parameter to filter results. Filter by tag: `?tag=AngularJS`
+Returns most recent blog posts by default, optionally provide tag query parameter to filter results.<br>
+Filter by tag: `?tag=AngularJS`
 
 ### Create Blog Post
 ```
