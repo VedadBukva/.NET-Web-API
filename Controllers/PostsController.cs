@@ -146,12 +146,13 @@ namespace _NET_Web_API.Controllers
                             bP.blogPost.Body = bP.blogPost.Body.Trim();
                         }
                         bP.blogPost.CreatedAt = post.CreatedAt;
+                        List<string> appendedTags = new List<string>();
+                        appendedTags = bP.blogPost.TagList.ToList();
                         foreach(var tag in post.TagList)
                         {
-                            bP.blogPost.TagList.Append(tag);
+                            appendedTags.Add(tag);
                         }
                         
-
                         DateTime today = DateTime.Parse(DateTime.Now.ToString());
                         bP.blogPost.UpdatedAt = today.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
                         for(var i=0; i<bP.blogPost.TagList.Count(); i++)
@@ -239,14 +240,20 @@ namespace _NET_Web_API.Controllers
                                 
                                 updateBlogPost.ExecuteNonQuery();
                             
-                                foreach(var tag in bP.blogPost.TagList.Distinct())
+                                foreach(var tag in AddTagsToPost(FindPostBySlug(slug)).TagList)
                                 {
-                                    var updateTagsOfBlogPost = connection.CreateCommand();
-                                    updateTagsOfBlogPost.CommandText = "UPDATE Tags Set Slug = @slug, TagDescription = @tag Where Slug = @requiredSlug";
-                                    updateTagsOfBlogPost.Parameters.AddWithValue("@requiredSlug",slug);
-                                    updateTagsOfBlogPost.Parameters.AddWithValue("@slug",bP.blogPost.Slug);
-                                    updateTagsOfBlogPost.Parameters.AddWithValue("@tag",tag);
-                                    updateTagsOfBlogPost.ExecuteNonQuery();
+                                var deleteTag = connection.CreateCommand();
+                                deleteTag.CommandText = "DELETE FROM Tags WHERE Slug = @slug";
+                                deleteTag.Parameters.AddWithValue("@slug",slug);
+                                deleteTag.ExecuteNonQuery();
+                                }                 
+                                foreach(var tag in appendedTags.Distinct())
+                                {
+                                    var insertTagsOfBlogPost = connection.CreateCommand();
+                                    insertTagsOfBlogPost.CommandText = "INSERT INTO Tags Values(@slug,@tag)";
+                                    insertTagsOfBlogPost.Parameters.AddWithValue("@slug",bP.blogPost.Slug);
+                                    insertTagsOfBlogPost.Parameters.AddWithValue("@tag",tag);
+                                    insertTagsOfBlogPost.ExecuteNonQuery();
                                 }
                                 transaction.Commit();
                                 }
