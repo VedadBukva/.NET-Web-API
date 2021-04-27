@@ -27,6 +27,10 @@ namespace _NET_Web_API.Controllers
         public ActionResult <IEnumerable<Post>> GetAllPosts()
         {
             var posts = _repository.GetPosts().ToList();
+            if(posts.Count() == 0)
+            {
+                return StatusCode(404,"ERROR: No posts in database!");
+            }
             List<PostWithTags> listOfNewPosts = new List<PostWithTags>();
             foreach(var post in posts)
             {
@@ -67,7 +71,7 @@ namespace _NET_Web_API.Controllers
             return Ok(blogPost);
         }
 
-        [HttpPost]
+        [HttpPost("posts")]
         public ActionResult CreateBlogPost([FromBody] BlogPost bP)
         {
             if(ArePostAttributesFilledCorectly(bP.blogPost))
@@ -142,7 +146,11 @@ namespace _NET_Web_API.Controllers
                             bP.blogPost.Body = bP.blogPost.Body.Trim();
                         }
                         bP.blogPost.CreatedAt = post.CreatedAt;
-                        bP.blogPost.TagList = post.TagList;
+                        foreach(var tag in post.TagList)
+                        {
+                            bP.blogPost.TagList.Append(tag);
+                        }
+                        
 
                         DateTime today = DateTime.Parse(DateTime.Now.ToString());
                         bP.blogPost.UpdatedAt = today.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
@@ -231,7 +239,7 @@ namespace _NET_Web_API.Controllers
                                 
                                 updateBlogPost.ExecuteNonQuery();
                             
-                                foreach(var tag in post.TagList)
+                                foreach(var tag in bP.blogPost.TagList.Distinct())
                                 {
                                     var updateTagsOfBlogPost = connection.CreateCommand();
                                     updateTagsOfBlogPost.CommandText = "UPDATE Tags Set Slug = @slug, TagDescription = @tag Where Slug = @requiredSlug";
@@ -262,7 +270,7 @@ namespace _NET_Web_API.Controllers
             Post post = this.FindPostBySlug(slug);  
             if (post == null)  
             {  
-                return StatusCode(404,"Required post not found!");  
+                return StatusCode(404,"ERROR: Required post not found!");  
             }  
             var connectionStringBuilder = new SqliteConnectionStringBuilder();
             connectionStringBuilder.DataSource = "./Posts.db";
@@ -287,7 +295,7 @@ namespace _NET_Web_API.Controllers
                 }   
             connection.Close();
             }         
-            return StatusCode(200,$"Post with slug \"{slug}\" is deleted!");  
+            return StatusCode(200,$"SUCCESS: Post with slug \"{slug}\" is deleted!");  
         } 
         #endregion
         
