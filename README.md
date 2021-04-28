@@ -16,7 +16,8 @@ Load project folder in Visual Studio Code (or just open terminal in root of proj
 ```
 dotnet run
 ```
-After successful start of app in the terminal will be visible URL of localhost where we can test functionalities of this API
+After successful start of app in the terminal will be visible URL of localhost where we can test functionalities of this API<br>
+Link of started app will be http://localhost:5000 or http://localhost:5001
 
 ## Endpoints
 ### Get Blog Post
