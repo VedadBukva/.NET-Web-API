@@ -12,7 +12,7 @@ For purpose of this project was used SQLite database which is integrated in proj
 Database is filled with initial data
 
 ## How to run? 
-Load project folder in Visual Studio Code (or just open terminal in root of project folder) and run the ASP.NET Core application with the following line of code in terminal:
+Load project folder in Visual Studio Code (or just open terminal with git functionalities in root of project folder) and run the ASP.NET Core application with the following line of code in terminal:
 ```
 dotnet run
 ```
