@@ -18,7 +18,7 @@ Open terminal and position yourself in root of project folder, then run the ASP.
 dotnet run
 ```
 After successful start of app in terminal will be visible URL of localhost where we can test functionalities of this API<br>
-Link of started app will be http://localhost:5000 or http://localhost:5001
+Link of started app will be http://localhost:5000 or http://localhost:5001 
 
 ## Endpoints
 ### Get Blog Post
